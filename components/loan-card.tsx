@@ -13,20 +13,20 @@ interface LoanCardProps {
 
 export function LoanCard({ loan, customerName, onClick }: LoanCardProps) {
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
-      active: 'default',
-      paid: 'secondary',
-      overdue: 'destructive',
-      pending: 'outline',
+    const styles: Record<string, string> = {
+      active: 'bg-[#FFF3E0] text-[#E85D04] border-[#E85D04]/30',
+      paid: 'bg-green-50 text-[#16A34A] border-green-200',
+      overdue: 'bg-red-50 text-[#DC2626] border-red-200',
+      pending: 'bg-gray-50 text-gray-600 border-gray-200',
     };
-    return variants[status] || 'default';
+    return styles[status] || styles.pending;
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      active: 'text-blue-600 bg-blue-50',
-      paid: 'text-green-600 bg-green-50',
-      overdue: 'text-red-600 bg-red-50',
+      active: 'text-[#E85D04] bg-[#FFF3E0]',
+      paid: 'text-[#16A34A] bg-green-50',
+      overdue: 'text-[#DC2626] bg-red-50',
       pending: 'text-gray-600 bg-gray-50',
     };
     return colors[status] || '';
@@ -45,7 +45,7 @@ export function LoanCard({ loan, customerName, onClick }: LoanCardProps) {
               <p className="text-sm text-muted-foreground">Loan ID: {loan.id}</p>
             </div>
           </div>
-          <Badge variant={getStatusBadge(loan.status)}>{loan.status}</Badge>
+          <Badge variant="outline" className={getStatusBadge(loan.status)}>{loan.status}</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

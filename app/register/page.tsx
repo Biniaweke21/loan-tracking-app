@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Store, ShoppingBag, Flame } from 'lucide-react';
 
 export const metadata = {
   title: 'Register - Kirari',
@@ -11,101 +9,70 @@ export const metadata = {
 
 export default function Register() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#FAFAFA]">
+      <div className="w-full max-w-xl">
+
         {/* Logo */}
-        <div className="mb-8 text-center">
+        <div className="mb-10 text-center">
           <Link href={ROUTES.HOME} className="inline-flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary" />
-            <span className="text-2xl font-bold text-primary">Kirari</span>
+            <div className="h-9 w-9 rounded-full bg-[#E85D04] flex items-center justify-center">
+              <Flame className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-[#E85D04]">Kirari</span>
           </Link>
+          <h1 className="mt-6 text-2xl font-bold text-[#1A1A2E]">Welcome to Kirari</h1>
+          <p className="mt-2 text-sm text-gray-500">Are you a shop owner or a buyer?</p>
         </div>
 
-        <div className="card p-8 space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold">Create Account</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Start managing loans with Kirari
+        {/* Role cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          {/* Shop Owner */}
+          <Link
+            href={ROUTES.REGISTER_SHOP}
+            className="group flex flex-col items-center text-center p-8 bg-white rounded-2xl border-2 border-[#E85D04]/30 hover:border-[#E85D04] hover:shadow-lg transition-all duration-200"
+          >
+            <div className="h-16 w-16 rounded-2xl bg-[#FFF3E0] flex items-center justify-center mb-4 group-hover:bg-[#E85D04] transition-colors duration-200">
+              <Store className="h-8 w-8 text-[#E85D04] group-hover:text-white transition-colors duration-200" />
+            </div>
+            <h2 className="text-lg font-bold text-[#1A1A2E] mb-1">I own a shop</h2>
+            <p className="text-xs text-gray-400 mb-1 font-medium">የሱቅ ባለቤት ነኝ</p>
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+              Track loans I give to my customers and send reminders
             </p>
-          </div>
-
-          <form className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Business Name</label>
-              <Input placeholder="Your business name" className="mt-1.5" />
+            <div className="mt-6 w-full py-2.5 rounded-lg bg-[#E85D04] text-white text-sm font-semibold group-hover:bg-[#C44D03] transition-colors duration-200">
+              Register as Shop Owner
             </div>
+          </Link>
 
-            <div>
-              <label className="text-sm font-medium">Full Name</label>
-              <Input placeholder="Your full name" className="mt-1.5" />
+          {/* Buyer */}
+          <Link
+            href={ROUTES.REGISTER_BUYER}
+            className="group flex flex-col items-center text-center p-8 bg-white rounded-2xl border-2 border-[#1A1A2E]/20 hover:border-[#1A1A2E] hover:shadow-lg transition-all duration-200"
+          >
+            <div className="h-16 w-16 rounded-2xl bg-[#1A1A2E]/5 flex items-center justify-center mb-4 group-hover:bg-[#1A1A2E] transition-colors duration-200">
+              <ShoppingBag className="h-8 w-8 text-[#1A1A2E] group-hover:text-white transition-colors duration-200" />
             </div>
-
-            <div>
-              <label className="text-sm font-medium">Email</label>
-              <Input type="email" placeholder="your@email.com" className="mt-1.5" />
+            <h2 className="text-lg font-bold text-[#1A1A2E] mb-1">I am a buyer</h2>
+            <p className="text-xs text-gray-400 mb-1 font-medium">ገዢ ነኝ</p>
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+              Confirm loans from shops and track what I owe
+            </p>
+            <div className="mt-6 w-full py-2.5 rounded-lg bg-[#1A1A2E] text-white text-sm font-semibold group-hover:bg-[#2D2D44] transition-colors duration-200">
+              Register as Buyer
             </div>
+          </Link>
 
-            <div>
-              <label className="text-sm font-medium">Phone Number</label>
-              <Input placeholder="+251911223344" className="mt-1.5" />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Password</label>
-              <Input type="password" placeholder="At least 8 characters" className="mt-1.5" />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Confirm Password</label>
-              <Input type="password" placeholder="Re-enter password" className="mt-1.5" />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox id="terms" />
-              <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-                I agree to the{' '}
-                <a href="#" className="text-primary hover:underline">
-                  Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-primary hover:underline">
-                  Privacy Policy
-                </a>
-              </label>
-            </div>
-
-            <Button className="w-full">Create Account</Button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Button variant="outline" className="w-full">
-              Sign up with Google
-            </Button>
-            <Button variant="outline" className="w-full">
-              Sign up with Apple
-            </Button>
-          </div>
-
-          <div className="text-center text-sm">
-            Already have an account?{' '}
-            <Link href={ROUTES.LOGIN} className="text-primary hover:underline font-medium">
-              Sign In
-            </Link>
-          </div>
         </div>
 
-        <p className="text-xs text-center text-muted-foreground mt-6">
-          By creating an account, you agree to our Terms of Service and Privacy Policy
+        {/* Login link */}
+        <p className="mt-8 text-center text-sm text-gray-500">
+          Already have an account?{' '}
+          <Link href={ROUTES.LOGIN} className="text-[#E85D04] font-medium hover:underline">
+            Sign In
+          </Link>
         </p>
+
       </div>
     </main>
   );

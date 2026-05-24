@@ -1,202 +1,324 @@
 'use client';
 
+import Link from 'next/link';
 import { AppLayout } from '@/components/app-layout';
 import { AppHeader } from '@/components/app-header';
-import { StatCard } from '@/components/stat-card';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dummyLoans, dummyCustomers } from '@/lib/dummy-data';
-import { CURRENCY_SYMBOL } from '@/lib/constants';
+import { CURRENCY_SYMBOL, ROUTES } from '@/lib/constants';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import {
-  Users,
-  Banknote,
-  TrendingUp,
-  AlertCircle,
-} from 'lucide-react';
+import { Plus, Send, Eye, AlertCircle, Clock, Banknote, TrendingUp } from 'lucide-react';
 
-const chartData = [
-  { month: 'Jan', loans: 12, paid: 8 },
-  { month: 'Feb', loans: 15, paid: 11 },
-  { month: 'Mar', loans: 18, paid: 14 },
-  { month: 'Apr', loans: 22, paid: 18 },
-  { month: 'May', loans: 25, paid: 21 },
-  { month: 'Jun', loans: 28, paid: 24 },
+/* ── helpers ─────────────────────────────────────────────── */
+
+function getCustomerName(id: string) {
+  return dummyCustomers.find((c) => c.id === id)?.name ?? 'Unknown';
+}
+
+function daysSince(date: Date) {
+  return Math.floor((Date.now() - date.getTime()) / 86_400_000);
+}
+
+function daysUntil(date: Date) {
+  return Math.ceil((date.getTime() - Date.now()) / 86_400_000);
+}
+
+/* ── static data ─────────────────────────────────────────── */
+
+const weeklyData = [
+  { week: 'W1', loans: 4 },
+  { week: 'W2', loans: 7 },
+  { week: 'W3', loans: 5 },
+  { week: 'W4', loans: 9 },
+  { week: 'W5', loans: 6 },
 ];
 
-const statusData = [
-  { name: 'Active', value: 18, fill: '#42a5f5' },
-  { name: 'Paid', value: 24, fill: '#66bb6a' },
-  { name: 'Overdue', value: 6, fill: '#ef5350' },
+const activityFeed = [
+  { id: 1, type: 'loan',     action: 'New loan recorded for', buyer: 'ብርሃነ ታደሰ',  time: '2 min ago' },
+  { id: 2, type: 'payment',  action: 'Payment confirmed by',  buyer: 'ታሪክ ዩሱፍ',   time: '1 hr ago' },
+  { id: 3, type: 'reminder', action: 'Reminder sent to',      buyer: 'ሙሙ ሙሊታ',    time: '3 hr ago' },
+  { id: 4, type: 'loan',     action: 'New loan recorded for', buyer: 'ሌት ሳዩ',      time: 'Yesterday' },
+  { id: 5, type: 'payment',  action: 'Payment confirmed by',  buyer: 'ብርሃነ ታደሰ',  time: 'Yesterday' },
 ];
+
+const dotColor: Record<string, string> = {
+  loan:     'bg-[#E85D04]',
+  payment:  'bg-[#16A34A]',
+  reminder: 'bg-blue-500',
+};
+
+/* ── sub-components ──────────────────────────────────────── */
+
+function StatCard({
+  label, value, sub, borderColor, icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  borderColor: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <div
+      className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start gap-4"
+      style={{ borderLeftWidth: 4, borderLeftColor: borderColor }}
+    >
+      <div
+        className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
+        style={{ backgroundColor: `${borderColor}18` }}
+      >
+        <Icon className="h-5 w-5" style={{ color: borderColor }} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500 font-medium">{label}</p>
+        <p className="text-2xl font-black text-[#1A1A2E] leading-tight">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ── page ────────────────────────────────────────────────── */
 
 export default function Dashboard() {
-  const totalLoanAmount = dummyLoans.reduce((sum, l) => sum + l.totalAmount, 0);
-  const paidAmount = dummyLoans.reduce((sum, l) => sum + l.paidAmount, 0);
-  const overdueAmount = dummyLoans
-    .filter((l) => l.status === 'overdue')
-    .reduce((sum, l) => sum + l.remainingAmount, 0);
-  const activeLoans = dummyLoans.filter((l) => l.status === 'active' || l.status === 'overdue')
-    .length;
-  const collectionRate = ((paidAmount / totalLoanAmount) * 100).toFixed(1);
+  const overdueLoans = dummyLoans.filter((l) => l.status === 'overdue');
+  const activeLoans  = dummyLoans.filter((l) => l.status === 'active');
+
+  const dueThisWeek = dummyLoans.filter((l) => {
+    const d = daysUntil(l.dueDate);
+    return (l.status === 'active') && d >= 0 && d <= 7;
+  });
+
+  const totalOutstanding = dummyLoans
+    .filter((l) => l.status !== 'paid')
+    .reduce((s, l) => s + l.remainingAmount, 0);
 
   return (
     <AppLayout>
       <AppHeader />
-      <main className="p-4 md:p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back! Here&apos;s your loan portfolio overview.
-          </p>
+
+      <main className="p-4 md:p-6 space-y-6 pb-24 md:pb-8">
+
+        {/* ── Stats row ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Outstanding"
+            value={`${CURRENCY_SYMBOL} ${totalOutstanding.toLocaleString()}`}
+            sub="across all active loans"
+            borderColor="#E85D04"
+            icon={TrendingUp}
+          />
+          <StatCard
+            label="Active Loans"
+            value={activeLoans.length}
+            sub="currently running"
+            borderColor="#1A1A2E"
+            icon={Banknote}
+          />
+          <StatCard
+            label="Overdue"
+            value={overdueLoans.length}
+            sub="need attention"
+            borderColor="#DC2626"
+            icon={AlertCircle}
+          />
+          <StatCard
+            label="Due This Week"
+            value={dueThisWeek.length}
+            sub="upcoming payments"
+            borderColor="#E85D04"
+            icon={Clock}
+          />
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Total Customers"
-            value={dummyCustomers.length}
-            icon={<Users className="h-5 w-5" />}
-          />
-          <StatCard
-            title="Active Loans"
-            value={activeLoans}
-            icon={<Banknote className="h-5 w-5" />}
-          />
-          <StatCard
-            title="Total Loan Amount"
-            value={`${CURRENCY_SYMBOL}${(totalLoanAmount / 1000).toFixed(0)}K`}
-            icon={<TrendingUp className="h-5 w-5" />}
-            trend={{ value: 12, direction: 'up' }}
-          />
-          <StatCard
-            title="Overdue Amount"
-            value={`${CURRENCY_SYMBOL}${(overdueAmount / 1000).toFixed(0)}K`}
-            icon={<AlertCircle className="h-5 w-5" />}
-            className="md:col-span-2 lg:col-span-1"
-          />
-        </div>
-
-        {/* Charts */}
+        {/* ── Main grid: left column + right activity feed ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Loan Trends */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Loan Activity Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis stroke="var(--muted-foreground)" />
-                  <YAxis stroke="var(--muted-foreground)" />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="loans"
-                    stroke="var(--primary)"
-                    strokeWidth={2}
-                    name="New Loans"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="paid"
-                    stroke="var(--status-success)"
-                    strokeWidth={2}
-                    name="Paid Loans"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
 
-          {/* Status Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Loan Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-4 space-y-2">
-                {statusData.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
+          {/* Left column */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Overdue loans */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="font-bold text-[#1A1A2E]">Overdue Loans</h2>
+                <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {overdueLoans.length}
+                </span>
+              </div>
+
+              {overdueLoans.length === 0 ? (
+                <div className="bg-white rounded-xl border border-gray-100 p-6 text-center text-sm text-gray-400">
+                  No overdue loans
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {overdueLoans.map((loan) => (
+                    <div
+                      key={loan.id}
+                      className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
+                      style={{ borderLeftWidth: 4, borderLeftColor: '#DC2626' }}
+                    >
+                      <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[#1A1A2E] truncate">
+                            {getCustomerName(loan.customerId)}
+                          </p>
+                          <p className="text-red-600 font-black text-lg leading-tight">
+                            {CURRENCY_SYMBOL} {loan.remainingAmount.toLocaleString()}
+                          </p>
+                          <p className="text-red-400 text-xs mt-0.5">
+                            {daysSince(loan.dueDate)} days overdue
+                          </p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E85D04] text-[#E85D04] text-xs font-semibold hover:bg-[#FFF3E0] transition-colors">
+                            <Send className="h-3 w-3" />
+                            Send Reminder
+                          </button>
+                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-500 text-xs font-semibold hover:bg-gray-100 transition-colors">
+                            <Eye className="h-3 w-3" />
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Due this week */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="font-bold text-[#1A1A2E]">Due This Week</h2>
+                <span className="bg-[#FFF3E0] text-[#E85D04] text-xs font-bold px-2 py-0.5 rounded-full">
+                  {dueThisWeek.length}
+                </span>
+              </div>
+
+              {dueThisWeek.length === 0 ? (
+                <div className="bg-white rounded-xl border border-gray-100 p-6 text-center text-sm text-gray-400">
+                  Nothing due this week
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {dueThisWeek.map((loan) => {
+                    const days = daysUntil(loan.dueDate);
+                    return (
                       <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: item.fill }}
-                      />
-                      {item.name}
-                    </span>
-                    <span className="font-semibold">{item.value}</span>
+                        key={loan.id}
+                        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
+                        style={{ borderLeftWidth: 4, borderLeftColor: '#E85D04' }}
+                      >
+                        <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-[#1A1A2E] truncate">
+                              {getCustomerName(loan.customerId)}
+                            </p>
+                            <p className="text-[#E85D04] font-black text-lg leading-tight">
+                              {CURRENCY_SYMBOL} {loan.remainingAmount.toLocaleString()}
+                            </p>
+                            <p className="text-gray-400 text-xs mt-0.5">
+                              Due{' '}
+                              <span className="font-semibold text-[#E85D04]">
+                                {days === 0 ? 'today' : `in ${days} day${days !== 1 ? 's' : ''}`}
+                              </span>
+                              {' — '}
+                              {loan.dueDate.toLocaleDateString('en-GB', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E85D04] text-[#E85D04] text-xs font-semibold hover:bg-[#FFF3E0] transition-colors">
+                              <Send className="h-3 w-3" />
+                              Send Reminder
+                            </button>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-500 text-xs font-semibold hover:bg-gray-100 transition-colors">
+                              <Eye className="h-3 w-3" />
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Bar chart */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+              <h2 className="font-bold text-[#1A1A2E] mb-4">Loans This Month</h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={weeklyData} barSize={32}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <XAxis
+                    dataKey="week"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                    width={24}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#FFF3E0' }}
+                    contentStyle={{
+                      border: 'none',
+                      borderRadius: 8,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar dataKey="loans" fill="#E85D04" radius={[6, 6, 0, 0]} name="Loans" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+          </div>
+
+          {/* Right column — activity feed */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 h-full">
+              <h2 className="font-bold text-[#1A1A2E] mb-4">Recent Activity</h2>
+              <div className="space-y-4">
+                {activityFeed.map((item) => (
+                  <div key={item.id} className="flex gap-3">
+                    {/* Colored dot */}
+                    <div className="flex flex-col items-center gap-1 pt-1">
+                      <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${dotColor[item.type]}`} />
+                      <div className="w-px flex-1 bg-gray-100" />
+                    </div>
+                    <div className="pb-4 min-w-0">
+                      <p className="text-sm text-gray-500 leading-snug">
+                        {item.action}{' '}
+                        <span className="font-semibold text-[#1A1A2E]">{item.buyer}</span>
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">{item.time}</p>
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Key Metrics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Collection Rate</p>
-                <p className="text-2xl font-bold text-primary">{collectionRate}%</p>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="text-2xl font-bold">{CURRENCY_SYMBOL}{(paidAmount / 1000).toFixed(0)}K</p>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Pending Amount</p>
-                <p className="text-2xl font-bold text-status-warning">
-                  {CURRENCY_SYMBOL}
-                  {((totalLoanAmount - paidAmount) / 1000).toFixed(0)}K
-                </p>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Avg Loan Size</p>
-                <p className="text-2xl font-bold">
-                  {CURRENCY_SYMBOL}
-                  {(totalLoanAmount / dummyLoans.length / 1000).toFixed(0)}K
-                </p>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+        </div>
       </main>
+
+      {/* ── Floating action button ── */}
+      <Link
+        href={ROUTES.NEW_LOAN}
+        className="fixed bottom-24 right-5 md:bottom-8 md:right-8 z-40 flex items-center gap-2 bg-[#E85D04] hover:bg-[#C44D03] text-white font-semibold pl-4 pr-5 py-3.5 rounded-full shadow-lg hover:shadow-xl transition-all"
+        aria-label="New Loan"
+      >
+        <Plus className="h-5 w-5" />
+        <span className="text-sm">New Loan</span>
+      </Link>
     </AppLayout>
   );
 }
