@@ -1,266 +1,154 @@
-"use client";
+'use client';
 
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { ArrowLeft, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 
-type LoanItem = { name: string; amount: number };
+const supabase = createClient();
 
-type PendingLoan = {
-  id: string;
-  dateRecorded: string;
-  items: LoanItem[];
-};
-
-type ActiveLoan = {
-  id: string;
-  date: string;
-  status: "overdue" | "due-soon" | "clear";
-  dueDate: string;
-  items: LoanItem[];
-};
-
-type PaidLoan = {
-  id: string;
-  date: string;
-  paidDate: string;
-  items: LoanItem[];
-};
-
-type ShopData = {
-  name: string;
-  totalOwed: number;
-  activeCount: number;
-  pending: PendingLoan[];
-  active: ActiveLoan[];
-  paid: PaidLoan[];
-};
-
-const shopData: Record<string, ShopData> = {
-  "1": {
-    name: "Tigist General Store",
-    totalOwed: 2400,
-    activeCount: 3,
-    pending: [
-      {
-        id: "p1",
-        dateRecorded: "May 24, 2026",
-        items: [
-          { name: "Sugar 2kg", amount: 120 },
-          { name: "Cooking Oil 1L", amount: 180 },
-          { name: "Flour 5kg", amount: 300 },
-        ],
-      },
-    ],
-    active: [
-      {
-        id: "a1",
-        date: "May 10, 2026",
-        status: "overdue",
-        dueDate: "May 20, 2026",
-        items: [
-          { name: "Rice 10kg", amount: 650 },
-          { name: "Lentils 2kg", amount: 150 },
-        ],
-      },
-      {
-        id: "a2",
-        date: "May 18, 2026",
-        status: "due-soon",
-        dueDate: "May 25, 2026",
-        items: [
-          { name: "Tomato paste x4", amount: 200 },
-          { name: "Salt 1kg", amount: 50 },
-          { name: "Soap x3", amount: 150 },
-        ],
-      },
-      {
-        id: "a3",
-        date: "May 22, 2026",
-        status: "clear",
-        dueDate: "Jun 22, 2026",
-        items: [
-          { name: "Teff 5kg", amount: 600 },
-        ],
-      },
-    ],
-    paid: [
-      {
-        id: "pd1",
-        date: "Apr 5, 2026",
-        paidDate: "Apr 30, 2026",
-        items: [
-          { name: "Berbere 500g", amount: 180 },
-          { name: "Niter kibbeh 1kg", amount: 320 },
-        ],
-      },
-    ],
-  },
-  "2": {
-    name: "Kebede Supermarket",
-    totalOwed: 600,
-    activeCount: 1,
-    pending: [],
-    active: [
-      {
-        id: "a1",
-        date: "May 19, 2026",
-        status: "due-soon",
-        dueDate: "May 29, 2026",
-        items: [
-          { name: "Pasta x6", amount: 240 },
-          { name: "Canned tomatoes x4", amount: 360 },
-        ],
-      },
-    ],
-    paid: [
-      {
-        id: "pd1",
-        date: "Mar 12, 2026",
-        paidDate: "Mar 28, 2026",
-        items: [
-          { name: "Cooking Oil 2L", amount: 340 },
-          { name: "Sugar 1kg", amount: 60 },
-        ],
-      },
-      {
-        id: "pd2",
-        date: "Apr 20, 2026",
-        paidDate: "May 5, 2026",
-        items: [
-          { name: "Rice 5kg", amount: 325 },
-        ],
-      },
-    ],
-  },
-  "3": {
-    name: "Almaz Mini Market",
-    totalOwed: 1100,
-    activeCount: 2,
-    pending: [],
-    active: [
-      {
-        id: "a1",
-        date: "May 1, 2026",
-        status: "clear",
-        dueDate: "Jun 1, 2026",
-        items: [
-          { name: "Injera x20", amount: 400 },
-          { name: "Shiro 500g", amount: 200 },
-        ],
-      },
-      {
-        id: "a2",
-        date: "May 15, 2026",
-        status: "clear",
-        dueDate: "Jun 15, 2026",
-        items: [
-          { name: "Eggs x30", amount: 300 },
-          { name: "Butter 250g", amount: 200 },
-        ],
-      },
-    ],
-    paid: [],
-  },
-};
-
-function itemTotal(items: LoanItem[]) {
-  return items.reduce((s, i) => s + i.amount, 0);
+function dueDateColor(dueDateStr: string, status: string) {
+  if (status === 'paid') return 'text-gray-400';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const weekFromNow = new Date(); weekFromNow.setDate(weekFromNow.getDate() + 7);
+  const due = new Date(dueDateStr);
+  if (due < today) return 'text-red-500';
+  if (due <= weekFromNow) return 'text-[#E85D04]';
+  return 'text-gray-400';
 }
 
-function StatusBadge({ status }: { status: ActiveLoan["status"] }) {
-  if (status === "overdue")
-    return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600">Overdue</span>;
-  if (status === "due-soon")
-    return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-[#E85D04]">Due soon</span>;
-  return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">Clear</span>;
-}
-
-function dueDateColor(status: ActiveLoan["status"]) {
-  if (status === "overdue") return "text-red-500";
-  if (status === "due-soon") return "text-[#E85D04]";
-  return "text-gray-400";
+function fmtDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export default function BuyerShopPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const [loans, setLoans] = useState<any[]>([]);
+  const [shopName, setShopName] = useState('');
+  const [loading, setLoading] = useState(true);
   const [showPaid, setShowPaid] = useState(false);
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
-  const shop = shopData[id];
+  useEffect(() => {
+    const fetchShopLoans = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/login'); return; }
 
-  if (!shop) {
+      const { data: loansData } = await supabase
+        .from('loans')
+        .select('*, loan_items(*), shops(shop_name)')
+        .or(`buyer_id.eq.${user.id},buyer_email.eq.${user.email}`)
+        .eq('shop_id', id)
+        .order('created_at', { ascending: false });
+
+      if (loansData && loansData.length > 0) {
+        setShopName(loansData[0].shops?.shop_name || 'Shop');
+        setLoans(loansData);
+      }
+      setLoading(false);
+    };
+    fetchShopLoans();
+  }, [id]);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const pendingLoans = loans.filter((l) => l.status === 'pending_confirmation' && !dismissed.has(l.id));
+  const activeLoans  = loans.filter((l) => l.status === 'active');
+  const paidLoans    = loans.filter((l) => l.status === 'paid');
+  const totalOwed    = loans.filter((l) => l.status !== 'paid').reduce((sum, l) => sum + Number(l.total_amount), 0);
+
+  const handleConfirm = async (loan: any) => {
+    setConfirming(loan.id);
+    const response = await fetch('/api/confirm-loan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: loan.confirmation_token }),
+    });
+    const result = await response.json();
+    if (response.ok && !result.error) {
+      setLoans((prev) => prev.map((l) => l.id === loan.id ? { ...l, status: 'active' } : l));
+    }
+    setConfirming(null);
+  };
+
+  if (loading) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-12 text-center text-gray-400">
-        Shop not found.
-      </div>
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <div className="h-8 w-8 rounded-full border-2 border-[#E85D04] border-t-transparent animate-spin" />
+      </main>
     );
   }
 
-  const visiblePending = shop.pending.filter((l) => !dismissed.has(l.id));
+  if (loans.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.push('/buyer/dashboard')} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ArrowLeft className="h-5 w-5 text-[#1A1A2E]" />
+          </button>
+          <h1 className="flex-1 text-center font-bold text-lg text-[#1A1A2E] pr-9">{shopName || 'Shop'}</h1>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+          <CheckCircle className="h-12 w-12 text-green-400" />
+          <p className="font-semibold text-[#1A1A2E]">No loans from this shop</p>
+          <p className="text-sm text-gray-400">Loans recorded by this shop will appear here.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.push("/buyer/dashboard")}
-          className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-        >
+        <button onClick={() => router.push('/buyer/dashboard')} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
           <ArrowLeft className="h-5 w-5 text-[#1A1A2E]" />
         </button>
-        <h1 className="flex-1 text-center font-bold text-lg text-[#1A1A2E] pr-9 truncate">
-          {shop.name}
-        </h1>
+        <h1 className="flex-1 text-center font-bold text-lg text-[#1A1A2E] pr-9 truncate">{shopName}</h1>
       </div>
 
       {/* Summary card */}
       <div className="bg-[#FFF3E0] rounded-2xl px-5 py-5">
-        <p className="font-bold text-[#1A1A2E] text-base">{shop.name}</p>
-        <p className="text-3xl font-bold text-[#E85D04] mt-1">
-          ETB {shop.totalOwed.toLocaleString()}
-        </p>
-        <p className="text-xs text-gray-500 mt-1">
-          {shop.activeCount} active {shop.activeCount === 1 ? "loan" : "loans"}
-        </p>
+        <p className="font-bold text-[#1A1A2E] text-base">{shopName}</p>
+        <p className="text-3xl font-bold text-[#E85D04] mt-1">ETB {totalOwed.toLocaleString()}</p>
+        <p className="text-xs text-gray-500 mt-1">{activeLoans.length} active {activeLoans.length === 1 ? 'loan' : 'loans'}</p>
       </div>
 
       {/* Pending confirmation */}
-      {visiblePending.length > 0 && (
+      {pendingLoans.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-1 h-5 rounded-full bg-[#E85D04]" />
             <h2 className="font-semibold text-[#1A1A2E]">Pending Your Confirmation</h2>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#E85D04] text-white">
-              {visiblePending.length}
-            </span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#E85D04] text-white">{pendingLoans.length}</span>
           </div>
           <div className="space-y-3">
-            {visiblePending.map((loan) => {
-              const total = itemTotal(loan.items);
+            {pendingLoans.map((loan) => {
+              const items: any[] = loan.loan_items ?? [];
               return (
                 <div key={loan.id} className="bg-[#FFF3E0] rounded-xl border border-orange-100 px-4 py-4 space-y-3">
-                  <p className="text-xs text-gray-500">Recorded on {loan.dateRecorded}</p>
+                  <p className="text-xs text-gray-500">Recorded on {fmtDate(loan.created_at)}</p>
                   <div className="space-y-1">
-                    {loan.items.map((item, i) => (
+                    {items.map((item: any, i: number) => (
                       <div key={i} className="flex justify-between text-sm">
-                        <span className="text-gray-700">{item.name}</span>
-                        <span className="text-gray-700">ETB {item.amount}</span>
+                        <span className="text-gray-700">{item.item_name}</span>
+                        <span className="text-gray-700">ETB {Number(item.amount).toLocaleString()}</span>
                       </div>
                     ))}
                     <div className="flex justify-between text-sm font-bold pt-2 border-t border-orange-200 mt-2">
                       <span>Total</span>
-                      <span className="text-[#E85D04]">ETB {total}</span>
+                      <span className="text-[#E85D04]">ETB {Number(loan.total_amount).toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="flex gap-2 pt-1">
                     <button
-                      onClick={() => setDismissed((prev) => new Set(prev).add(loan.id))}
-                      className="flex-1 py-2.5 rounded-lg bg-[#E85D04] text-white text-sm font-semibold"
+                      onClick={() => handleConfirm(loan)}
+                      disabled={confirming === loan.id}
+                      className="flex-1 py-2.5 rounded-lg bg-[#E85D04] text-white text-sm font-semibold disabled:opacity-60"
                     >
-                      Confirm Loan
+                      {confirming === loan.id ? 'Confirming…' : 'Confirm Loan'}
                     </button>
                     <button
                       onClick={() => setDismissed((prev) => new Set(prev).add(loan.id))}
@@ -277,77 +165,66 @@ export default function BuyerShopPage() {
       )}
 
       {/* Active loans */}
-      <div>
-        <h2 className="font-semibold text-[#1A1A2E] mb-3">Active Loans</h2>
-        <div className="space-y-3">
-          {shop.active.map((loan) => {
-            const total = itemTotal(loan.items);
-            return (
-              <div key={loan.id} className="bg-white rounded-xl border border-gray-200 px-4 py-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs text-gray-400">{loan.date}</span>
-                  <StatusBadge status={loan.status} />
-                </div>
-                <div className="space-y-0">
-                  {loan.items.map((item, i) => (
-                    <div key={i}>
-                      {i > 0 && <div className="border-t border-gray-100 my-1.5" />}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{item.name}</span>
-                        <span className="text-gray-600">ETB {item.amount}</span>
+      {activeLoans.length > 0 && (
+        <div>
+          <h2 className="font-semibold text-[#1A1A2E] mb-3">Active Loans</h2>
+          <div className="space-y-3">
+            {activeLoans.map((loan) => {
+              const items: any[] = loan.loan_items ?? [];
+              return (
+                <div key={loan.id} className="bg-white rounded-xl border border-gray-200 px-4 py-4">
+                  <div className="space-y-0">
+                    {items.map((item: any, i: number) => (
+                      <div key={i}>
+                        {i > 0 && <div className="border-t border-gray-100 my-1.5" />}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{item.item_name}</span>
+                          <span className="text-gray-600">ETB {Number(item.amount).toLocaleString()}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-100 mt-3 pt-3">
+                    <p className="text-base font-bold text-[#E85D04]">ETB {Number(loan.total_amount).toLocaleString()}</p>
+                    <p className={`text-xs mt-0.5 ${dueDateColor(loan.due_date, loan.status)}`}>Due {fmtDate(loan.due_date)}</p>
+                  </div>
                 </div>
-                <div className="border-t border-gray-100 mt-3 pt-3">
-                  <p className="text-base font-bold text-[#E85D04]">ETB {total.toLocaleString()}</p>
-                  <p className={`text-xs mt-0.5 ${dueDateColor(loan.status)}`}>
-                    Due {loan.dueDate}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Paid loans */}
-      {shop.paid.length > 0 && (
+      {paidLoans.length > 0 && (
         <div>
-          <button
-            onClick={() => setShowPaid((v) => !v)}
-            className="flex items-center gap-1 text-sm font-medium text-[#E85D04]"
-          >
-            {showPaid ? "Hide payment history" : "Show payment history"}
+          <button onClick={() => setShowPaid((v) => !v)} className="flex items-center gap-1 text-sm font-medium text-[#E85D04]">
+            {showPaid ? 'Hide payment history' : 'Show payment history'}
             {showPaid ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
-
           {showPaid && (
             <div className="space-y-3 mt-3">
-              {shop.paid.map((loan) => {
-                const total = itemTotal(loan.items);
+              {paidLoans.map((loan) => {
+                const items: any[] = loan.loan_items ?? [];
                 return (
                   <div key={loan.id} className="bg-gray-50 rounded-xl border border-gray-200 px-4 py-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-gray-400">{loan.date}</span>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">
-                        Paid
-                      </span>
+                      <span className="text-xs text-gray-400">{fmtDate(loan.created_at)}</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-600">Paid</span>
                     </div>
                     <div className="space-y-0">
-                      {loan.items.map((item, i) => (
+                      {items.map((item: any, i: number) => (
                         <div key={i}>
                           {i > 0 && <div className="border-t border-gray-100 my-1.5" />}
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">{item.name}</span>
-                            <span className="text-gray-500">ETB {item.amount}</span>
+                            <span className="text-gray-500">{item.item_name}</span>
+                            <span className="text-gray-500">ETB {Number(item.amount).toLocaleString()}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                     <div className="border-t border-gray-100 mt-3 pt-3">
-                      <p className="text-sm font-bold text-gray-500">ETB {total.toLocaleString()}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Paid on {loan.paidDate}</p>
+                      <p className="text-sm font-bold text-gray-500">ETB {Number(loan.total_amount).toLocaleString()}</p>
                     </div>
                   </div>
                 );

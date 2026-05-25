@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
   { href: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
@@ -24,6 +25,13 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <aside className="hidden md:flex flex-col w-60 shrink-0 h-screen bg-[#1A1A2E] sticky top-0">
@@ -82,7 +90,7 @@ export function SidebarNav() {
             <p className="text-white/40 text-xs truncate">John Doe</p>
           </div>
         </div>
-        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-white/50 hover:bg-[#2D2D44] hover:text-white text-xs font-medium transition-colors">
+        <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-white/50 hover:bg-[#2D2D44] hover:text-white text-xs font-medium transition-colors">
           <LogOut className="h-3.5 w-3.5 shrink-0" />
           Log out
         </button>

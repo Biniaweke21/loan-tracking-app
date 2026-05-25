@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Flame, Eye, EyeOff } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const CITIES = [
   'Addis Ababa',
@@ -23,8 +24,13 @@ export default function RegisterBuyer() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [error, setError] = useState('');
+  const supabase = createClient();
   const [form, setForm] = useState({
     fullName: '',
+    email: '',
     phone: '',
     city: '',
     password: '',
@@ -39,6 +45,7 @@ export default function RegisterBuyer() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.fullName.trim()) e.fullName = 'Full name is required';
+    if (!form.email.trim()) e.email = 'Email address is required';
     if (!form.phone.trim()) e.phone = 'Phone number is required';
     if (!form.city) e.city = 'Please select a city';
     if (form.password.length < 8) e.password = 'Password must be at least 8 characters';
@@ -46,14 +53,53 @@ export default function RegisterBuyer() {
     return e;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    router.push(ROUTES.BUYER_DASHBOARD);
+    setLoading(true);
+    setError('');
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      if (!data.user) {
+        setError('No user returned from signup');
+        setLoading(false);
+        return;
+      }
+      if (data.user.identities?.length === 0) {
+        setError('An account with this email already exists.');
+        setLoading(false);
+        return;
+      }
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        full_name: form.fullName,
+        phone_number: form.phone.replace(/\s+/g, ''),
+        role: 'buyer',
+        city: form.city,
+      });
+      if (profileError) {
+        setError('Profile failed: ' + profileError.message);
+        setLoading(false);
+        return;
+      }
+      setSuccessMsg('Account created successfully.');
+      router.push('/login?registered=true');
+    } catch (err) {
+      setError('Unexpected error: ' + String(err));
+    }
+    setLoading(false);
   };
 
   return (
@@ -86,6 +132,12 @@ export default function RegisterBuyer() {
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
+            {error && (
+              <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
+                {error}
+              </p>
+            )}
+
             {/* Full Name */}
             <div>
               <label className="text-sm font-medium text-[#1A1A2E]">
@@ -98,6 +150,21 @@ export default function RegisterBuyer() {
                 onChange={(e) => set('fullName', e.target.value)}
               />
               {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-sm font-medium text-[#1A1A2E]">
+                Email Address <span className="text-[#1A1A2E]">*</span>
+              </label>
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                className="mt-1.5 focus-visible:ring-[#1A1A2E]/20 focus-visible:border-[#1A1A2E]"
+                value={form.email}
+                onChange={(e) => set('email', e.target.value)}
+              />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
             </div>
 
             {/* Phone */}
@@ -190,10 +257,18 @@ export default function RegisterBuyer() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-[#1A1A2E] hover:bg-[#2D2D44] text-white font-semibold text-sm transition-colors mt-2"
+              onClick={() => handleSubmit()}
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg bg-[#1A1A2E] hover:bg-[#2D2D44] text-white font-semibold text-sm transition-colors mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Create Buyer Account
+              {loading ? 'Creating account…' : 'Create Buyer Account'}
             </button>
+
+            {successMsg && (
+              <p className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
+                {successMsg}
+              </p>
+            )}
 
           </form>
 

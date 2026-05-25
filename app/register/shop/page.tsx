@@ -7,6 +7,7 @@ import { ROUTES } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Flame, Eye, EyeOff } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const CITIES = [
   'Addis Ababa',
@@ -26,9 +27,14 @@ export default function RegisterShop() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [error, setError] = useState('');
+  const supabase = createClient();
   const [form, setForm] = useState({
     shopName: '',
     ownerName: '',
+    email: '',
     phone: '',
     city: '',
     password: '',
@@ -44,6 +50,7 @@ export default function RegisterShop() {
     const e: Record<string, string> = {};
     if (!form.shopName.trim()) e.shopName = 'Shop name is required';
     if (!form.ownerName.trim()) e.ownerName = 'Owner name is required';
+    if (!form.email.trim()) e.email = 'Email address is required';
     if (!form.phone.trim()) e.phone = 'Phone number is required';
     if (!form.city) e.city = 'Please select a city';
     if (form.password.length < 8) e.password = 'Password must be at least 8 characters';
@@ -52,14 +59,71 @@ export default function RegisterShop() {
     return e;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    router.push(ROUTES.DASHBOARD);
+    setLoading(true);
+    setError('');
+    try {
+      console.log('Step 1: Starting signup');
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
+      console.log('Step 2: SignUp result', data, error);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      if (!data.user) {
+        setError('No user returned from signup');
+        setLoading(false);
+        return;
+      }
+      console.log('Step 3: Inserting profile for user', data.user.id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          full_name: form.ownerName,
+          phone_number: form.phone.replace(/\s+/g, ''),
+          role: 'shop_owner',
+          city: form.city,
+        })
+        .select();
+      console.log('Step 4: Profile result', profileData, profileError);
+      if (profileError) {
+        setError('Profile failed: ' + profileError.message + ' code: ' + profileError.code);
+        setLoading(false);
+        return;
+      }
+      console.log('Step 5: Inserting shop');
+      const { data: shopData, error: shopError } = await supabase
+        .from('shops')
+        .insert({
+          owner_id: data.user.id,
+          shop_name: form.shopName,
+          city: form.city,
+        })
+        .select();
+      console.log('Step 6: Shop result', shopData, shopError);
+      if (shopError) {
+        setError('Shop failed: ' + shopError.message);
+        setLoading(false);
+        return;
+      }
+      setSuccessMsg('Account created successfully.');
+      router.push('/login?registered=true');
+    } catch (err) {
+      console.log('Caught error:', err);
+      setError('Unexpected error: ' + String(err));
+    }
+    setLoading(false);
   };
 
   return (
@@ -92,6 +156,12 @@ export default function RegisterShop() {
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
 
+            {error && (
+              <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
+                {error}
+              </p>
+            )}
+
             {/* Shop Name */}
             <div>
               <label className="text-sm font-medium text-[#1A1A2E]">
@@ -118,6 +188,21 @@ export default function RegisterShop() {
                 onChange={(e) => set('ownerName', e.target.value)}
               />
               {errors.ownerName && <p className="text-xs text-red-500 mt-1">{errors.ownerName}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-sm font-medium text-[#1A1A2E]">
+                Email Address <span className="text-[#E85D04]">*</span>
+              </label>
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                className="mt-1.5 focus-visible:ring-[#E85D04]/40 focus-visible:border-[#E85D04]"
+                value={form.email}
+                onChange={(e) => set('email', e.target.value)}
+              />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
             </div>
 
             {/* Phone */}
@@ -259,10 +344,18 @@ export default function RegisterShop() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-[#E85D04] hover:bg-[#C44D03] text-white font-semibold text-sm transition-colors mt-2"
+              onClick={() => handleSubmit()}
+              disabled={loading}
+              className="w-full py-2.5 rounded-lg bg-[#E85D04] hover:bg-[#C44D03] text-white font-semibold text-sm transition-colors mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Create Shop Account
+              {loading ? 'Creating account…' : 'Create Shop Account'}
             </button>
+
+            {successMsg && (
+              <p className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
+                {successMsg}
+              </p>
+            )}
 
           </form>
 

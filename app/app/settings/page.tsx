@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/app-layout';
 import { AppHeader } from '@/components/app-header';
-import { Edit2, Download, Trash2, Lock, Phone } from 'lucide-react';
+import { Edit2, Download, Trash2, Lock, Phone, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
 /* ── section wrapper ─────────────────────────────────────── */
 
@@ -65,6 +67,7 @@ function OrangeToggle({ checked, onChange }: { checked: boolean; onChange: (v: b
 /* ── page ────────────────────────────────────────────────── */
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState({
     dueDateReminders:    true,
     overdueAlerts:       true,
@@ -187,8 +190,19 @@ export default function SettingsPage() {
           <div className="px-5 py-4 border-b border-red-200">
             <h2 className="font-bold text-red-600">Danger Zone</h2>
           </div>
-          <div className="p-5">
-            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors">
+          <div className="p-5 space-y-3">
+            <button
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                router.push('/login');
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-500 text-red-500 hover:bg-red-100 font-bold text-sm transition-colors">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+            <button
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors">
               <Trash2 className="h-4 w-4" />
               Delete Account
             </button>

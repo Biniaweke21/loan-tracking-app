@@ -1,191 +1,92 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { Search } from 'lucide-react';
 
-type LoanStatus = "pending" | "active" | "overdue" | "paid";
+const supabase = createClient();
 
-type Loan = {
-  id: string;
-  shopName: string;
-  status: LoanStatus;
-  dueDate: string;
-  dueDays: number | null;
-  items: { name: string; amount: number }[];
-};
+type FilterChip = 'all' | 'pending' | 'active' | 'overdue' | 'paid';
 
-const allLoans: Loan[] = [
-  {
-    id: "1-p1",
-    shopName: "Tigist General Store",
-    status: "pending",
-    dueDate: "—",
-    dueDays: null,
-    items: [
-      { name: "Sugar 2kg", amount: 120 },
-      { name: "Cooking Oil 1L", amount: 180 },
-      { name: "Flour 5kg", amount: 300 },
-    ],
-  },
-  {
-    id: "1-a1",
-    shopName: "Tigist General Store",
-    status: "overdue",
-    dueDate: "May 20, 2026",
-    dueDays: -4,
-    items: [
-      { name: "Rice 10kg", amount: 650 },
-      { name: "Lentils 2kg", amount: 150 },
-    ],
-  },
-  {
-    id: "1-a2",
-    shopName: "Tigist General Store",
-    status: "active",
-    dueDate: "May 25, 2026",
-    dueDays: 1,
-    items: [
-      { name: "Tomato paste x4", amount: 200 },
-      { name: "Salt 1kg", amount: 50 },
-      { name: "Soap x3", amount: 150 },
-    ],
-  },
-  {
-    id: "1-a3",
-    shopName: "Tigist General Store",
-    status: "active",
-    dueDate: "Jun 22, 2026",
-    dueDays: 29,
-    items: [{ name: "Teff 5kg", amount: 600 }],
-  },
-  {
-    id: "1-pd1",
-    shopName: "Tigist General Store",
-    status: "paid",
-    dueDate: "Paid Apr 30, 2026",
-    dueDays: null,
-    items: [
-      { name: "Berbere 500g", amount: 180 },
-      { name: "Niter kibbeh 1kg", amount: 320 },
-    ],
-  },
-  {
-    id: "2-a1",
-    shopName: "Kebede Supermarket",
-    status: "active",
-    dueDate: "May 29, 2026",
-    dueDays: 5,
-    items: [
-      { name: "Pasta x6", amount: 240 },
-      { name: "Canned tomatoes x4", amount: 360 },
-    ],
-  },
-  {
-    id: "2-pd1",
-    shopName: "Kebede Supermarket",
-    status: "paid",
-    dueDate: "Paid Mar 28, 2026",
-    dueDays: null,
-    items: [
-      { name: "Cooking Oil 2L", amount: 340 },
-      { name: "Sugar 1kg", amount: 60 },
-    ],
-  },
-  {
-    id: "2-pd2",
-    shopName: "Kebede Supermarket",
-    status: "paid",
-    dueDate: "Paid May 5, 2026",
-    dueDays: null,
-    items: [{ name: "Rice 5kg", amount: 325 }],
-  },
-  {
-    id: "3-a1",
-    shopName: "Almaz Mini Market",
-    status: "active",
-    dueDate: "Jun 1, 2026",
-    dueDays: 8,
-    items: [
-      { name: "Injera x20", amount: 400 },
-      { name: "Shiro 500g", amount: 200 },
-    ],
-  },
-  {
-    id: "3-a2",
-    shopName: "Almaz Mini Market",
-    status: "active",
-    dueDate: "Jun 15, 2026",
-    dueDays: 22,
-    items: [
-      { name: "Eggs x30", amount: 300 },
-      { name: "Butter 250g", amount: 200 },
-    ],
-  },
+const chips: { key: FilterChip; label: string }[] = [
+  { key: 'all',     label: 'All' },
+  { key: 'pending', label: 'Pending Confirmation' },
+  { key: 'active',  label: 'Active' },
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'paid',    label: 'Paid' },
 ];
 
-const statusOrder: Record<LoanStatus, number> = {
-  overdue: 0,
-  pending: 1,
-  active: 2,
-  paid: 3,
+const STATUS_MAP: Record<string, { label: string; cls: string }> = {
+  pending_confirmation: { label: 'Pending',  cls: 'bg-orange-50 text-[#E85D04]' },
+  active:               { label: 'Active',   cls: 'bg-blue-50 text-blue-600' },
+  paid:                 { label: 'Paid',     cls: 'bg-green-50 text-green-600' },
+  overdue:              { label: 'Overdue',  cls: 'bg-red-50 text-red-600' },
 };
 
-function sortLoans(loans: Loan[]) {
-  return [...loans].sort((a, b) => {
-    const orderDiff = statusOrder[a.status] - statusOrder[b.status];
-    if (orderDiff !== 0) return orderDiff;
-    if (a.dueDays !== null && b.dueDays !== null) return a.dueDays - b.dueDays;
-    return 0;
-  });
+function dueDateColor(dueDateStr: string, status: string) {
+  if (status === 'paid' || status === 'pending_confirmation') return 'text-gray-400';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const weekFromNow = new Date(); weekFromNow.setDate(weekFromNow.getDate() + 7);
+  const due = new Date(dueDateStr);
+  if (due < today)       return 'text-red-500';
+  if (due <= weekFromNow) return 'text-[#E85D04]';
+  return 'text-gray-400';
 }
 
-type FilterChip = "All" | "Pending Confirmation" | "Active" | "Overdue" | "Paid";
-const chips: FilterChip[] = ["All", "Pending Confirmation", "Active", "Overdue", "Paid"];
-
-function chipToStatus(chip: FilterChip): LoanStatus | null {
-  if (chip === "Pending Confirmation") return "pending";
-  if (chip === "Active") return "active";
-  if (chip === "Overdue") return "overdue";
-  if (chip === "Paid") return "paid";
-  return null;
+function fmtDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function StatusBadge({ status }: { status: LoanStatus }) {
-  const map: Record<LoanStatus, { label: string; cls: string }> = {
-    pending: { label: "Pending", cls: "bg-orange-50 text-[#E85D04]" },
-    active: { label: "Active", cls: "bg-blue-50 text-blue-600" },
-    overdue: { label: "Overdue", cls: "bg-red-50 text-red-600" },
-    paid: { label: "Paid", cls: "bg-green-50 text-green-600" },
-  };
-  const { label, cls } = map[status];
-  return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${cls}`}>{label}</span>
-  );
-}
-
-function dueDateColor(loan: Loan) {
-  if (loan.status === "paid") return "text-gray-400";
-  if (loan.status === "pending") return "text-gray-400";
-  if (loan.dueDays !== null && loan.dueDays < 0) return "text-red-500";
-  if (loan.dueDays !== null && loan.dueDays <= 7) return "text-[#E85D04]";
-  return "text-gray-400";
+function effectiveStatus(loan: any) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (loan.status !== 'paid' && loan.status !== 'pending_confirmation' && new Date(loan.due_date) < today) return 'overdue';
+  return loan.status;
 }
 
 export default function BuyerLoansPage() {
-  const [search, setSearch] = useState("");
-  const [activeChip, setActiveChip] = useState<FilterChip>("All");
+  const router = useRouter();
+  const [loans, setLoans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterChip>('all');
+  const [search, setSearch] = useState('');
 
-  const filtered = sortLoans(
-    allLoans.filter((loan) => {
-      const matchesChip =
-        activeChip === "All" || loan.status === chipToStatus(activeChip);
-      const matchesSearch =
-        search.trim() === "" ||
-        loan.shopName.toLowerCase().includes(search.toLowerCase()) ||
-        loan.items.some((i) => i.name.toLowerCase().includes(search.toLowerCase()));
-      return matchesChip && matchesSearch;
-    })
-  );
+  useEffect(() => {
+    const fetchLoans = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/login'); return; }
+      const { data: loansData } = await supabase
+        .from('loans')
+        .select('*, loan_items(*), shops(shop_name)')
+        .or(`buyer_id.eq.${user.id},buyer_email.eq.${user.email}`)
+        .order('created_at', { ascending: false });
+      if (loansData) setLoans(loansData);
+      setLoading(false);
+    };
+    fetchLoans();
+  }, []);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  const filteredLoans = loans.filter((loan) => {
+    const due = new Date(loan.due_date);
+    const matchesSearch = !search || loan.shops?.shop_name?.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    if (filter === 'all')     return true;
+    if (filter === 'pending') return loan.status === 'pending_confirmation';
+    if (filter === 'active')  return loan.status === 'active';
+    if (filter === 'overdue') return due < today && loan.status !== 'paid';
+    if (filter === 'paid')    return loan.status === 'paid';
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white">
+        <div className="h-8 w-8 rounded-full border-2 border-[#E85D04] border-t-transparent animate-spin" />
+      </main>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
@@ -196,7 +97,7 @@ export default function BuyerLoansPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Search shop or item..."
+          placeholder="Search by shop name…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-[#E85D04] focus:border-transparent bg-white"
@@ -207,51 +108,60 @@ export default function BuyerLoansPage() {
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {chips.map((chip) => (
           <button
-            key={chip}
-            onClick={() => setActiveChip(chip)}
+            key={chip.key}
+            onClick={() => setFilter(chip.key)}
             className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-              activeChip === chip
-                ? "bg-[#E85D04] border-[#E85D04] text-white"
-                : "bg-white border-[#E85D04] text-[#E85D04]"
+              filter === chip.key
+                ? 'bg-[#E85D04] border-[#E85D04] text-white'
+                : 'bg-white border-[#E85D04] text-[#E85D04]'
             }`}
           >
-            {chip}
+            {chip.label}
           </button>
         ))}
       </div>
 
       {/* Loan cards */}
-      <div className="space-y-3">
-        {filtered.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-10">No loans found.</p>
-        )}
-        {filtered.map((loan) => {
-          const total = loan.items.reduce((s, i) => s + i.amount, 0);
-          return (
-            <div key={loan.id} className="bg-white rounded-xl border border-gray-200 px-4 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold text-[#1A1A2E] text-sm">{loan.shopName}</span>
-                <StatusBadge status={loan.status} />
-              </div>
-              <div>
-                {loan.items.map((item, i) => (
-                  <div key={i}>
-                    {i > 0 && <div className="border-t border-gray-100 my-1.5" />}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">{item.name}</span>
-                      <span className="text-gray-600">ETB {item.amount}</span>
+      {filteredLoans.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-sm text-gray-400">
+            {loans.length === 0 ? 'No loans yet. Loans from shops will appear here.' : 'No loans match your filter.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredLoans.map((loan) => {
+            const items: any[] = loan.loan_items ?? [];
+            const status = effectiveStatus(loan);
+            const badge = STATUS_MAP[status] ?? STATUS_MAP.active;
+            return (
+              <div key={loan.id} className="bg-white rounded-xl border border-gray-200 px-4 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-semibold text-[#1A1A2E] text-sm">{loan.shops?.shop_name || '—'}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                </div>
+                <div>
+                  {items.map((item: any, i: number) => (
+                    <div key={i}>
+                      {i > 0 && <div className="border-t border-gray-100 my-1.5" />}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{item.item_name}</span>
+                        <span className="text-gray-600">ETB {Number(item.amount).toLocaleString()}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <span className="font-bold text-[#E85D04]">ETB {Number(loan.total_amount).toLocaleString()}</span>
+                  <span className={`text-xs font-medium ${dueDateColor(loan.due_date, loan.status)}`}>
+                    {loan.status === 'paid' ? 'Paid' : `Due ${fmtDate(loan.due_date)}`}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                <span className="font-bold text-[#E85D04]">ETB {total.toLocaleString()}</span>
-                <span className={`text-xs font-medium ${dueDateColor(loan)}`}>{loan.dueDate}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
