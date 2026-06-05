@@ -226,7 +226,7 @@ export default function LoanDetailPage() {
   useEffect(() => {
     const fetchLoan = async () => {
       const { data: loanData, error } = await supabase
-        .from('loans').select('*, loan_items(*)').eq('id', params.id).single();
+        .from('loans').select('*, loan_items(*), shops(shop_name), shop_id').eq('id', params.id).single();
       if (error || !loanData) { setNotFound(true); setLoading(false); return; }
       setLoan(loanData);
       const { data: paymentsData } = await supabase
@@ -300,13 +300,16 @@ export default function LoanDetailPage() {
       setAddItemsLoading(false);
       return;
     }
+    const { data: shopData } = await supabase.from('shops').select('shop_name').eq('id', loan.shop_id).single()
+    console.log('Shop data for email:', shopData, loan.shop_id)
+    const emailShopName = shopData?.shop_name || loan.shops?.shop_name || 'The shop'
     await fetch('/api/send-confirmation-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         buyerEmail: loan.buyer_email,
         buyerName: loan.buyer_name,
-        shopName: loan.shops?.shop_name,
+        shopName: emailShopName,
         totalAmount: newTotal,
         dueDate: newDueDate,
         items: validItems,
