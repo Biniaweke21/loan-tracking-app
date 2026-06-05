@@ -28,6 +28,7 @@ export default function ConfirmLoanPage() {
   const [notFound, setNotFound] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -59,6 +60,11 @@ export default function ConfirmLoanPage() {
       setConfirming(false);
       return;
     }
+    const { data: loanData } = await supabase.from('loans').select('buyer_email, buyer_id').eq('confirmation_token', token).single()
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user?.id || '').single()
+    const buyerHasAccount = !!profile || !!loanData?.buyer_id
+    setIsLoggedIn(buyerHasAccount)
     setConfirmed(true);
     setConfirming(false);
   };
@@ -109,21 +115,33 @@ export default function ConfirmLoanPage() {
           <CheckCircle className="h-10 w-10 text-green-600" />
         </div>
         <h2 className="text-2xl font-bold text-[#1A1A2E]">Loan Confirmed!</h2>
-        <p className="text-sm text-gray-500 max-w-xs">
-          Your loan has been recorded and confirmed. The shop owner has been notified.
-        </p>
-        <p className="text-xs text-gray-400">You can now close this page.</p>
-        <div className="mt-4 bg-[#FFF3E0] border border-[#E85D04]/30 rounded-xl px-5 py-4 max-w-xs text-center">
-          <p className="text-sm text-gray-600 mb-3">
-            Create a Kirari account to track all your loans in one place.
-          </p>
-          <Link
-            href="/register/buyer"
-            className="inline-block bg-[#E85D04] hover:bg-[#C44D03] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
-          >
-            Create Free Account
-          </Link>
-        </div>
+        {isLoggedIn ? (
+          <>
+            <p className="text-sm text-gray-500 max-w-xs">Your loan has been confirmed successfully.</p>
+            <button
+              onClick={() => window.location.href = '/buyer/dashboard'}
+              className="mt-2 bg-[#E85D04] hover:bg-[#C44D03] text-white text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
+            >
+              Go to My Dashboard
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-gray-500 max-w-xs">Your loan has been confirmed. Create a free account to track all your loans in one place.</p>
+            <button
+              onClick={() => window.location.href = '/register/buyer'}
+              className="mt-2 bg-[#E85D04] hover:bg-[#C44D03] text-white text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
+            >
+              Create Free Account
+            </button>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
+            >
+              Continue without account
+            </button>
+          </>
+        )}
       </main>
     );
   }
