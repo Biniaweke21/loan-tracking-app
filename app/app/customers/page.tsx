@@ -45,7 +45,7 @@ function CustomerCard({ customer }: { customer: any }) {
         </div>
         <div className="text-right shrink-0 flex flex-col items-end gap-1">
           <p className="font-black text-[#1A1A2E] text-base leading-none">{CURRENCY_SYMBOL} {customer.totalOwed.toLocaleString()}</p>
-          <p className="text-[10px] text-gray-400">total owed</p>
+          <p className="text-[10px] text-gray-400">remaining balance</p>
         </div>
         <ChevronDown className={cn('h-5 w-5 text-gray-400 shrink-0 transition-transform duration-200 ml-1', open && 'rotate-180')} />
       </div>
@@ -110,7 +110,7 @@ export default function CustomersPage() {
         const customer = customerMap.get(key);
         customer.loans.push(loan);
         if (loan.status !== 'paid') {
-          customer.totalOwed += Number(loan.total_amount);
+          customer.totalOwed += Number(loan.total_amount) - Number(loan.amount_paid || 0);
           customer.activeLoans += 1;
         }
       });

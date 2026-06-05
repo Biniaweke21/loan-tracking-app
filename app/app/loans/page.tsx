@@ -76,8 +76,8 @@ function LoanCard({ loan }: { loan: any }) {
           <p className="text-xs text-gray-400 mt-0.5 truncate">{loan.buyer_email || '—'}</p>
         </div>
         <div className="text-center shrink-0 px-3">
-          <p className="text-xl font-black text-[#E85D04] leading-none">{CURRENCY_SYMBOL} {Number(loan.total_amount).toLocaleString()}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">total</p>
+          <p className="text-xl font-black text-[#E85D04] leading-none">{CURRENCY_SYMBOL} {(Number(loan.total_amount) - Number(loan.amount_paid || 0)).toLocaleString()}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">remaining</p>
         </div>
         <div className="flex flex-col items-end gap-1.5 shrink-0">
           <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full border', cfg.badge)}>{cfg.label}</span>
@@ -109,7 +109,7 @@ export default function LoansPage() {
       const { data: shop } = await supabase.from('shops').select('id').eq('owner_id', user.id).single();
       if (!shop) { setLoading(false); return; }
       const { data: loansData } = await supabase
-        .from('loans').select('*, loan_items(*)').eq('shop_id', shop.id).order('created_at', { ascending: false });
+        .from('loans').select('id, total_amount, amount_paid, due_date, status, buyer_name, buyer_email, shop_id, created_at, loan_items(*)').eq('shop_id', shop.id).order('created_at', { ascending: false });
       if (loansData) setLoans(loansData);
       setLoading(false);
     };

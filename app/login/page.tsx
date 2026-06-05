@@ -24,16 +24,45 @@ export default function Login() {
     const supabase = createClient();
     const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError('Incorrect email or password');
-      setLoading(false);
-      return;
+      if (error.message.includes('Invalid login credentials') ||
+        error.message.includes('invalid_credentials')) {
+        setError('No account found with this email or password is incorrect.')
+      } else {
+        setError(error.message)
+      }
+      setLoading(false)
+      return
     }
     if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      if (!profile) {
+        const pending = localStorage.getItem('kirari_pending_profile');
+        if (pending) {
+          const pendingData = JSON.parse(pending);
+          await supabase.from('profiles').insert({
+            id: user.id,
+            full_name: pendingData.full_name,
+            phone_number: pendingData.phone_number,
+            role: pendingData.role,
+            city: pendingData.city,
+          });
+          if (pendingData.role === 'shop_owner') {
+            await supabase.from('shops').insert({
+              owner_id: user.id,
+              shop_name: pendingData.shop_name,
+              city: pendingData.city,
+            });
+          }
+          localStorage.removeItem('kirari_pending_profile');
+          profile = { role: pendingData.role };
+        }
+        if (!profile && !localStorage.getItem('kirari_pending_profile')) {
+          await supabase.auth.signOut()
+          setError('No account found. Please register first.')
+          setLoading(false)
+          return
+        }
+      }
       if (profile?.role === 'shop_owner') {
         router.push('/app/dashboard');
       } else if (profile?.role === 'buyer') {

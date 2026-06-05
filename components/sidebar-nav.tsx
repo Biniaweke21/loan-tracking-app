@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
@@ -26,9 +27,23 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [shopName, setShopName] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchShopInfo = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+      if (profile) setOwnerName(profile.full_name);
+      const { data: shop } = await supabase.from('shops').select('shop_name').eq('owner_id', user.id).single();
+      if (shop) setShopName(shop.shop_name);
+    };
+    fetchShopInfo();
+  }, []);
 
   const handleLogout = async () => {
-    const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');
   };
@@ -83,11 +98,13 @@ export function SidebarNav() {
       <div className="px-4 py-4 border-t border-[#2D2D44]">
         <div className="flex items-center gap-3 mb-3">
           <div className="h-8 w-8 rounded-full bg-[#E85D04] flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">JD</span>
+            <span className="text-white text-xs font-bold">
+              {ownerName ? ownerName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) : '…'}
+            </span>
           </div>
           <div className="min-w-0">
-            <p className="text-white text-xs font-semibold truncate">Tigist General Store</p>
-            <p className="text-white/40 text-xs truncate">John Doe</p>
+            <p className="text-white text-xs font-semibold truncate">{shopName || <span className="text-white/30">Loading...</span>}</p>
+            <p className="text-white/40 text-xs truncate">{ownerName || <span className="text-white/20">Loading...</span>}</p>
           </div>
         </div>
         <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-white/50 hover:bg-[#2D2D44] hover:text-white text-xs font-medium transition-colors">

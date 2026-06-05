@@ -56,7 +56,7 @@ export default function BuyerDashboardPage() {
     return due <= today && loan.status !== 'paid';
   });
 
-  const totalOutstanding = loans.reduce((sum, loan) => sum + Number(loan.total_amount), 0);
+  const totalOutstanding = loans.reduce((sum, loan) => sum + (Number(loan.total_amount) - Number(loan.amount_paid || 0)), 0);
 
   const shopMap = new Map<string, any>();
   loans.forEach((loan) => {
@@ -66,7 +66,7 @@ export default function BuyerDashboardPage() {
     }
     const shop = shopMap.get(shopName);
     shop.loans.push(loan);
-    shop.totalOwed += Number(loan.total_amount);
+    shop.totalOwed += Number(loan.total_amount) - Number(loan.amount_paid || 0);
   });
   const shopGroups = Array.from(shopMap.values());
 

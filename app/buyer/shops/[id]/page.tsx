@@ -56,7 +56,7 @@ export default function BuyerShopPage() {
   const pendingLoans = loans.filter((l) => l.status === 'pending_confirmation' && !dismissed.has(l.id));
   const activeLoans  = loans.filter((l) => l.status === 'active');
   const paidLoans    = loans.filter((l) => l.status === 'paid');
-  const totalOwed    = loans.filter((l) => l.status !== 'paid').reduce((sum, l) => sum + Number(l.total_amount), 0);
+  const totalOwed    = loans.filter((l) => l.status !== 'paid').reduce((sum, l) => sum + (Number(l.total_amount) - Number(l.amount_paid || 0)), 0);
 
   const handleConfirm = async (loan: any) => {
     setConfirming(loan.id);
@@ -185,7 +185,8 @@ export default function BuyerShopPage() {
                     ))}
                   </div>
                   <div className="border-t border-gray-100 mt-3 pt-3">
-                    <p className="text-base font-bold text-[#E85D04]">ETB {Number(loan.total_amount).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400">Total: ETB {Number(loan.total_amount).toLocaleString()}</p>
+                    <p className="text-base font-bold text-[#E85D04]">Remaining: ETB {(Number(loan.total_amount) - Number(loan.amount_paid || 0)).toLocaleString()}</p>
                     <p className={`text-xs mt-0.5 ${dueDateColor(loan.due_date, loan.status)}`}>Due {fmtDate(loan.due_date)}</p>
                   </div>
                 </div>

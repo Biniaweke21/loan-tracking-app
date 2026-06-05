@@ -66,7 +66,7 @@ export default function Dashboard() {
       setShopName(shop.shop_name);
 
       const { data: loans } = await supabase
-        .from('loans').select('*, loan_items(*)').eq('shop_id', shop.id).neq('status', 'paid');
+        .from('loans').select('id, total_amount, amount_paid, due_date, status, buyer_name, buyer_email, shop_id, created_at, loan_items(*)').eq('shop_id', shop.id).neq('status', 'paid');
       if (!loans) { setLoading(false); return; }
 
       const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -75,7 +75,7 @@ export default function Dashboard() {
       const active   = loans.filter((l: any) => l.status === 'active' || l.status === 'pending_confirmation');
       const overdue  = loans.filter((l: any) => new Date(l.due_date) < today && l.status !== 'paid');
       const dueSoon  = loans.filter((l: any) => { const d = new Date(l.due_date); return d >= today && d <= weekFromNow && l.status === 'active'; });
-      const outstanding = active.reduce((sum: number, l: any) => sum + Number(l.total_amount), 0);
+      const outstanding = active.reduce((sum: number, l: any) => sum + (Number(l.total_amount) - Number(l.amount_paid || 0)), 0);
 
       setStats({ totalOutstanding: outstanding, activeLoans: active.length, overdue: overdue.length, dueSoon: dueSoon.length });
       setOverdueLoans(overdue);

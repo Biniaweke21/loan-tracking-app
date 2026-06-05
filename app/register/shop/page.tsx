@@ -69,56 +69,69 @@ export default function RegisterShop() {
     setLoading(true);
     setError('');
     try {
-      console.log('Step 1: Starting signup');
+      const fullName = form.ownerName;
+      const phoneNumber = form.phone.replace(/\s+/g, '');
+      const shopName = form.shopName;
+      const city = form.city;
+      const email = form.email;
+      const password = form.password;
+
       const { data, error } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
+        email,
+        password,
       });
-      console.log('Step 2: SignUp result', data, error);
+      console.log('SignUp result:', data, error);
       if (error) {
-        setError(error.message);
+        if (data?.user?.identities?.length === 0) {
+          setError('An account with this email already exists.');
+        } else {
+          setError(error.message);
+        }
+        setLoading(false);
+        return;
+      }
+      if (data?.user?.identities?.length === 0) {
+        setError('An account with this email already exists.');
         setLoading(false);
         return;
       }
       if (!data.user) {
-        setError('No user returned from signup');
+        setError('Registration failed. Please try again.');
         setLoading(false);
         return;
       }
-      console.log('Step 3: Inserting profile for user', data.user.id);
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          full_name: form.ownerName,
-          phone_number: form.phone.replace(/\s+/g, ''),
-          role: 'shop_owner',
-          city: form.city,
-        })
-        .select();
-      console.log('Step 4: Profile result', profileData, profileError);
+
+      localStorage.setItem('kirari_pending_profile', JSON.stringify({
+        full_name: fullName,
+        phone_number: phoneNumber,
+        role: 'shop_owner',
+        city: city,
+        shop_name: shopName,
+        user_id: data.user.id,
+      }));
+
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        full_name: fullName,
+        phone_number: phoneNumber,
+        role: 'shop_owner',
+        city: city,
+      });
       if (profileError) {
-        setError('Profile failed: ' + profileError.message + ' code: ' + profileError.code);
-        setLoading(false);
-        return;
+        console.log('Profile insert failed, will retry on login:', profileError.message);
       }
-      console.log('Step 5: Inserting shop');
-      const { data: shopData, error: shopError } = await supabase
-        .from('shops')
-        .insert({
-          owner_id: data.user.id,
-          shop_name: form.shopName,
-          city: form.city,
-        })
-        .select();
-      console.log('Step 6: Shop result', shopData, shopError);
+
+      const { error: shopError } = await supabase.from('shops').insert({
+        owner_id: data.user.id,
+        shop_name: shopName,
+        city: city,
+      });
       if (shopError) {
-        setError('Shop failed: ' + shopError.message);
-        setLoading(false);
-        return;
+        console.log('Shop insert failed, will retry on login:', shopError.message);
       }
-      setSuccessMsg('Account created successfully.');
+
       router.push('/login?registered=true');
+      setLoading(false);
     } catch (err) {
       console.log('Caught error:', err);
       setError('Unexpected error: ' + String(err));
