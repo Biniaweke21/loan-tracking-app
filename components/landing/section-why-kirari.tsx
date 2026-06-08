@@ -32,7 +32,7 @@ const features = [
   {
     icon: Smartphone,
     title: 'Works on Any Phone',
-    desc: 'No special hardware needed. Kirari runs in any browser on any Android or iPhone.',
+    desc: 'No special hardware needed. Edaye runs in any browser on any Android or iPhone.',
   },
 ];
 
@@ -40,14 +40,14 @@ const testimonials = [
   {
     initials: 'TA',
     quote:
-      'Before Kirari I had arguments every week about who paid and who didn\'t. Now both sides confirm everything. No more fighting.',
+      'Before Edaye I had arguments every week about who paid and who didn\'t. Now both sides confirm everything. No more fighting.',
     name: 'Tigist A.',
     location: 'Dire Dawa',
   },
   {
     initials: 'BM',
     quote:
-      'I lost my debt book in a flood two years ago. Lost over 3000 birr. With Kirari that can never happen again.',
+      'I lost my debt book in a flood two years ago. Lost over 3000 birr. With Edaye that can never happen again.',
     name: 'Bekele M.',
     location: 'Addis Ababa',
   },
@@ -60,9 +60,9 @@ const testimonials = [
   },
 ];
 
-export function SectionWhyKirari() {
+export function SectionWhyEdaye() {
   return (
-    <section id="why-kirari">
+    <section id="why-edaye">
       {/* ── Features grid ── */}
       <div className="bg-white px-4 py-24">
         <div className="max-w-6xl mx-auto">
@@ -226,7 +226,7 @@ export function SectionWhyKirari() {
             Stop losing money to lost records.
           </h2>
           <p className="text-white/60 text-base mb-10 leading-relaxed">
-            Join shops across Ethiopia already using Kirari. Free to start. Takes 2 minutes.
+            Join shops across Ethiopia already using Edaye. Free to start. Takes 2 minutes.
           </p>
           <Link
             href={ROUTES.REGISTER}
@@ -244,7 +244,7 @@ export function SectionWhyKirari() {
       {/* ── Footer ── */}
       <footer className="bg-[#0F0F1A] px-4 py-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/30">
-          <p>&copy; 2025 Kirari. All rights reserved.</p>
+          <p>&copy; 2025 Edaye. All rights reserved.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
             <a href="#" className="hover:text-white/60 transition-colors">Terms</a>

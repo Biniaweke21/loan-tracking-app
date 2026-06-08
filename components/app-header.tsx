@@ -16,7 +16,7 @@ function usePageTitle(): string {
     [ROUTES.REMINDERS]: 'Reminders',
     [ROUTES.SETTINGS]:  'Settings',
   };
-  return map[pathname] ?? 'Kirari';
+  return map[pathname] ?? 'Edaye';
 }
 
 const BORDER: Record<string, string> = {

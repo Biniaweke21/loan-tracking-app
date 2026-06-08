@@ -1,11 +1,11 @@
 import { SiteHeader } from '@/components/site-header';
 import { SectionProblem } from '@/components/landing/section-problem';
 import { SectionHowItWorks } from '@/components/landing/section-how-it-works';
-import { SectionWhyKirari } from '@/components/landing/section-why-kirari';
+import { SectionWhyEdaye } from '@/components/landing/section-why-kirari';
 
 export const metadata = {
-  title: 'Kirari - Stop Losing Money to Lost Records',
-  description: 'Replace your debt book with Kirari. Track loans, confirm payments, and send reminders from your phone.',
+  title: 'Edaye - Stop Losing Money to Lost Records',
+  description: 'Replace your debt book with Edaye. Track loans, confirm payments, and send reminders from your phone.',
 };
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
       <main>
         <SectionProblem />
         <SectionHowItWorks />
-        <SectionWhyKirari />
+        <SectionWhyEdaye />
       </main>
     </>
   );

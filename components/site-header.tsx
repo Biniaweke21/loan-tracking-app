@@ -18,7 +18,7 @@ export function SiteHeader() {
   const navLinks = [
     { href: '#problem', label: 'The Problem' },
     { href: '#how-it-works', label: 'How It Works' },
-    { href: '#why-kirari', label: 'Why Kirari' },
+    { href: '#why-edaye', label: 'Why Edaye' },
   ];
 
   return (
@@ -37,7 +37,7 @@ export function SiteHeader() {
             <Flame className="h-4 w-4 text-white" />
           </div>
           <span className={`font-bold text-lg transition-colors ${scrolled ? 'text-[#E85D04]' : 'text-white'}`}>
-            Kirari
+            Edaye
           </span>
         </Link>
 

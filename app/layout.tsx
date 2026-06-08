@@ -9,8 +9,8 @@ const _inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const _notoSansEthiopic = Noto_Sans_Ethiopic({ subsets: ["ethiopic"], variable: '--font-noto-sans-ethiopic' });
 
 export const metadata: Metadata = {
-  title: 'Kirari - Loan Tracking',
-  description: 'Track and manage microfinance loans with Kirari',
+  title: 'Edaye - Loan Tracking',
+  description: 'Track and manage microfinance loans with Edaye',
   generator: 'v0.app',
   icons: {
     icon: [

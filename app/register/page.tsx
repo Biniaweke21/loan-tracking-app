@@ -3,8 +3,8 @@ import { ROUTES } from '@/lib/constants';
 import { Store, ShoppingBag, Flame } from 'lucide-react';
 
 export const metadata = {
-  title: 'Register - Kirari',
-  description: 'Create your Kirari account',
+  title: 'Register - Edaye',
+  description: 'Create your Edaye account',
 };
 
 export default function Register() {
@@ -18,9 +18,9 @@ export default function Register() {
             <div className="h-9 w-9 rounded-full bg-[#E85D04] flex items-center justify-center">
               <Flame className="h-5 w-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-[#E85D04]">Kirari</span>
+            <span className="text-2xl font-bold text-[#E85D04]">Edaye</span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-[#1A1A2E]">Welcome to Kirari</h1>
+          <h1 className="mt-6 text-2xl font-bold text-[#1A1A2E]">Welcome to Edaye</h1>
           <p className="mt-2 text-sm text-gray-500">Are you a shop owner or a buyer?</p>
         </div>
 

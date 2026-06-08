@@ -7,8 +7,8 @@ import { SiteHeader } from '@/components/site-header';
 import { ArrowLeft, Mail, Phone, MapPin } from 'lucide-react';
 
 export const metadata = {
-  title: 'Contact Kirari - Get in Touch',
-  description: 'Have questions? Get in touch with the Kirari team',
+  title: 'Contact Edaye - Get in Touch',
+  description: 'Have questions? Get in touch with the Edaye team',
 };
 
 export default function Contact() {
@@ -63,7 +63,7 @@ export default function Contact() {
                       </div>
                       <div>
                         <h4 className="font-medium">Email</h4>
-                        <p className="text-muted-foreground">hello@kirari.io</p>
+                        <p className="text-muted-foreground">hello@edaye.io</p>
                       </div>
                     </div>
 

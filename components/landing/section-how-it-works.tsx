@@ -20,7 +20,7 @@ const steps = [
   {
     num: '01',
     icon: Smartphone,
-    title: 'Open Kirari',
+    title: 'Open Edaye',
     desc: 'The shop owner opens the app and selects the buyer by phone number. If it\'s a new customer they register in seconds.',
     extra: null,
   },
@@ -28,7 +28,7 @@ const steps = [
     num: '02',
     icon: Mic,
     title: 'Record the Loan by Voice',
-    desc: 'Tap the microphone and speak naturally in Amharic or English. Say the amount, the items, and the due date. Kirari extracts the details automatically.',
+    desc: 'Tap the microphone and speak naturally in Amharic or English. Say the amount, the items, and the due date. Edaye extracts the details automatically.',
     extra: 'wave',
   },
   {
@@ -60,7 +60,7 @@ export function SectionHowItWorks() {
                 The Solution
               </p>
               <h2 className="text-3xl md:text-4xl font-bold text-[#1A1A2E] leading-tight mb-6">
-                Kirari replaces your debt book with something that never gets lost, never forgets,
+                Edaye replaces your debt book with something that never gets lost, never forgets,
                 and never lies.
               </h2>
               <ul className="space-y-4 mb-8">
@@ -101,7 +101,7 @@ export function SectionHowItWorks() {
                     <div className="p-3 space-y-2">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="h-5 w-5 rounded-full bg-[#E85D04]" />
-                        <span className="text-xs font-bold text-[#E85D04]">Kirari</span>
+                        <span className="text-xs font-bold text-[#E85D04]">Edaye</span>
                       </div>
                       <div className="bg-[#1A1A2E] rounded-xl p-3">
                         <p className="text-white text-xs font-semibold">Active Loans</p>
@@ -206,7 +206,7 @@ export function SectionHowItWorks() {
             The feature that ends arguments forever
           </h2>
           <p className="text-white/60 text-base max-w-2xl mx-auto mb-14 leading-relaxed">
-            In Kirari, no loan exists until both the shop owner AND the buyer confirm it. No loan
+            In Edaye, no loan exists until both the shop owner AND the buyer confirm it. No loan
             is marked paid until both parties agree. This is not just a record keeper — it is a
             trust system.
           </p>
@@ -218,7 +218,7 @@ export function SectionHowItWorks() {
                 <span className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center">
                   <X className="h-3.5 w-3.5 text-red-400" />
                 </span>
-                Without Kirari
+                Without Edaye
               </h3>
               <ul className="space-y-4">
                 {[
@@ -241,7 +241,7 @@ export function SectionHowItWorks() {
                 <span className="h-6 w-6 rounded-full bg-[#E85D04]/30 flex items-center justify-center">
                   <Check className="h-3.5 w-3.5 text-[#E85D04]" />
                 </span>
-                With Kirari
+                With Edaye
               </h3>
               <ul className="space-y-4">
                 {[

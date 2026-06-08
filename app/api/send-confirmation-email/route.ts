@@ -22,17 +22,17 @@ export async function POST(request: Request) {
   console.log('Sending confirmation email to:', buyerEmail, 'hasAccount:', buyerHasAccount)
 
   const { error } = await resend.emails.send({
-    from: 'Kirari <onboarding@resend.dev>',
+    from: 'Edaye <onboarding@resend.dev>',
     to: buyerEmail,
     subject: `${shopName} has recorded a loan for you`,
     html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: #E85D04; padding: 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">Kirari</h1>
+    <h1 style="color: white; margin: 0;">Edaye</h1>
   </div>
   <div style="padding: 30px;">
     <h2>Hello ${buyerName},</h2>
-    <p>${shopName} has recorded a loan for you on Kirari.</p>
+    <p>${shopName} has recorded a loan for you on Edaye.</p>
     <div style="background: #FFF3E0; border-left: 4px solid #E85D04; padding: 20px; margin: 20px 0;">
       <h3 style="margin-top: 0;">Loan Details</h3>
       <p><strong>Items:</strong></p>

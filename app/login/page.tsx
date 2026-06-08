@@ -80,14 +80,14 @@ function LoginForm() {
         <div className="mb-8 text-center">
           <Link href={ROUTES.HOME} className="inline-flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary" />
-            <span className="text-2xl font-bold text-primary">Kirari</span>
+            <span className="text-2xl font-bold text-primary">Edaye</span>
           </Link>
         </div>
 
         <div className="card p-8 space-y-6">
           <div>
             <h1 className="text-2xl font-bold">Welcome Back</h1>
-            <p className="text-sm text-muted-foreground mt-1">Sign in to your Kirari account</p>
+            <p className="text-sm text-muted-foreground mt-1">Sign in to your Edaye account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>

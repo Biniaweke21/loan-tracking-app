@@ -156,7 +156,7 @@ export default function RegisterShop() {
             <div className="h-8 w-8 rounded-full bg-[#E85D04] flex items-center justify-center">
               <Flame className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-[#E85D04]">Kirari</span>
+            <span className="font-bold text-[#E85D04]">Edaye</span>
           </Link>
         </div>
 

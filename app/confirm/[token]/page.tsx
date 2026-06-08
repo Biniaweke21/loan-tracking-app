@@ -158,7 +158,7 @@ export default function ConfirmLoanPage() {
           <div className="h-9 w-9 rounded-full bg-[#E85D04] flex items-center justify-center">
             <Flame className="h-5 w-5 text-white" />
           </div>
-          <span className="font-bold text-[#E85D04] text-xl">Kirari</span>
+          <span className="font-bold text-[#E85D04] text-xl">Edaye</span>
         </div>
 
         {/* Heading */}

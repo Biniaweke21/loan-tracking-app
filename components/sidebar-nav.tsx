@@ -60,12 +60,12 @@ export function SidebarNav() {
             <Flame className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-white font-bold text-lg leading-none">Kirari</p>
+            <p className="text-white font-bold text-lg leading-none">Edaye</p>
             <p
               className="text-white/40 text-xs leading-none mt-0.5"
               style={{ fontFamily: "var(--font-noto-sans-ethiopic, 'Noto Sans Ethiopic', sans-serif)" }}
             >
-              ቅራሪ
+              እዳዬ
             </p>
           </div>
         </div>

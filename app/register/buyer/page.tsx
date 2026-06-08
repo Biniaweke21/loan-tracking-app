@@ -119,7 +119,7 @@ export default function RegisterBuyer() {
             <div className="h-8 w-8 rounded-full bg-[#E85D04] flex items-center justify-center">
               <Flame className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-[#E85D04]">Kirari</span>
+            <span className="font-bold text-[#E85D04]">Edaye</span>
           </Link>
         </div>
 
@@ -275,7 +275,7 @@ export default function RegisterBuyer() {
           {/* Phone note */}
           <div className="rounded-lg bg-[#1A1A2E]/5 border border-[#1A1A2E]/10 px-4 py-3">
             <p className="text-xs text-[#1A1A2E]/70 leading-relaxed">
-              Your phone number is your identity in Kirari. Make sure it is the number you use daily.
+              Your phone number is your identity in Edaye. Make sure it is the number you use daily.
             </p>
           </div>
 

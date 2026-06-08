@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const html = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: #E85D04; padding: 20px; text-align: center;">
-    <h1 style="color: white; margin: 0;">Kirari</h1>
+    <h1 style="color: white; margin: 0;">Edaye</h1>
   </div>
   <div style="padding: 30px;">
     <h2>Hello ${buyerName},</h2>
@@ -40,13 +40,13 @@ export async function POST(request: Request) {
          <p>Please ensure this payment is correct. If you have any disputes contact ${shopName} directly.</p>`
     }
     <p style="color: #666; font-size: 14px; margin-top: 30px;">
-      This is an automated receipt from Kirari. Please keep this email for your records.
+      This is an automated receipt from Edaye. Please keep this email for your records.
     </p>
   </div>
 </div>`
 
   const { error } = await resend.emails.send({
-    from: 'Kirari <onboarding@resend.dev>',
+    from: 'Edaye <onboarding@resend.dev>',
     to: buyerEmail,
     subject,
     html,
